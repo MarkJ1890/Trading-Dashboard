@@ -3,15 +3,22 @@ import pandas as pd
 import numpy as np
 
 def ensure_series(data, index):
+    """
+    Zorgt ervoor dat alle indicator outputs worden geconverteerd naar een 1D pandas Series.
+    """
     try:
         if isinstance(data, pd.DataFrame):
             return data.iloc[:, 0]
-        elif isinstance(data, np.ndarray) and data.ndim == 2 and data.shape[1] == 1:
-            return pd.Series(data[:, 0], index=index)
+        elif isinstance(data, np.ndarray):
+            if data.ndim == 2 and data.shape[1] == 1:
+                return pd.Series(data[:, 0], index=index)
+            elif data.ndim == 1:
+                return pd.Series(data, index=index)
         elif isinstance(data, pd.Series):
             return data
         return pd.Series(data, index=index)
-    except Exception:
+    except Exception as e:
+        print(f"Fout tijdens conversie naar Series: {e}")
         return pd.Series(dtype=float)
 
 def generate_signals(df):
