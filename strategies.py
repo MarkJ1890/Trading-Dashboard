@@ -34,45 +34,37 @@ def generate_signals(df):
 
     df = df.copy()
 
-    # Zorg dat close een 1D Series is
-    close = df['Close']
-    if isinstance(close, pd.DataFrame):
-        close = close.iloc[:, 0]
-    elif isinstance(close, np.ndarray) and close.ndim == 2 and close.shape[1] == 1:
-        close = pd.Series(close[:, 0], index=df.index)
-
-    df['rsi'] = ensure_series(ta.momentum.RSIIndicator(close=close).rsi(), df.index)
-    df['macd'] = ensure_series(ta.trend.MACD(close=close).macd_diff(), df.index)
-    df['sma_fast'] = ensure_series(ta.trend.sma_indicator(close=close, window=20), df.index)
-    df['sma_slow'] = ensure_series(ta.trend.sma_indicator(close=close, window=50), df.index)
-
+    df['rsi'] = ensure_series(ta.momentum.RSIIndicator(close=df['Close']).rsi(), df.index)
+    df['macd'] = ensure_series(ta.trend.MACD(close=df['Close']).macd_diff(), df.index)
+    df['sma_fast'] = ensure_series(ta.trend.sma_indicator(close=df['Close'], window=20), df.index)
+    df['sma_slow'] = ensure_series(ta.trend.sma_indicator(close=df['Close'], window=50), df.index)
 
     last = df.iloc[-1]
     confidence = 0
     reasons = []
 
-    if last['rsi'] < 30:
+    if float(last['rsi']) < 30:
         signal = 'LONG'
         confidence += 30
         reasons.append("RSI < 30 (oversold)")
-    elif last['rsi'] > 70:
+    elif float(last['rsi']) > 70:
         signal = 'SHORT'
         confidence += 30
         reasons.append("RSI > 70 (overbought)")
     else:
         signal = 'HOLD'
 
-    if last['macd'] > 0 and signal == 'LONG':
+    if float(last['macd']) > 0 and signal == 'LONG':
         confidence += 20
         reasons.append("MACD bullish")
-    elif last['macd'] < 0 and signal == 'SHORT':
+    elif float(last['macd']) < 0 and signal == 'SHORT':
         confidence += 20
         reasons.append("MACD bearish")
 
-    if last['sma_fast'] > last['sma_slow'] and signal == 'LONG':
+    if float(last['sma_fast']) > float(last['sma_slow']) and signal == 'LONG':
         confidence += 20
         reasons.append("SMA 20 > SMA 50")
-    elif last['sma_fast'] < last['sma_slow'] and signal == 'SHORT':
+    elif float(last['sma_fast']) < float(last['sma_slow']) and signal == 'SHORT':
         confidence += 20
         reasons.append("SMA 20 < SMA 50")
 
