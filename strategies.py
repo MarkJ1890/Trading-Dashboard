@@ -34,10 +34,18 @@ def generate_signals(df):
 
     df = df.copy()
 
-    df['rsi'] = ensure_series(ta.momentum.RSIIndicator(close=df['Close']).rsi(), df.index)
-    df['macd'] = ensure_series(ta.trend.MACD(close=df['Close']).macd_diff(), df.index)
-    df['sma_fast'] = ensure_series(ta.trend.sma_indicator(close=df['Close'], window=20), df.index)
-    df['sma_slow'] = ensure_series(ta.trend.sma_indicator(close=df['Close'], window=50), df.index)
+    # Zorg dat close een 1D Series is
+    close = df['Close']
+    if isinstance(close, pd.DataFrame):
+        close = close.iloc[:, 0]
+    elif isinstance(close, np.ndarray) and close.ndim == 2 and close.shape[1] == 1:
+        close = pd.Series(close[:, 0], index=df.index)
+
+    df['rsi'] = ensure_series(ta.momentum.RSIIndicator(close=close).rsi(), df.index)
+    df['macd'] = ensure_series(ta.trend.MACD(close=close).macd_diff(), df.index)
+    df['sma_fast'] = ensure_series(ta.trend.sma_indicator(close=close, window=20), df.index)
+    df['sma_slow'] = ensure_series(ta.trend.sma_indicator(close=close, window=50), df.index)
+
 
     last = df.iloc[-1]
     confidence = 0
